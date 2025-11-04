@@ -1,7 +1,7 @@
 <!--
   IDOLSTAR (Idol Fan Club Dashboard) - 可直接部署的網站模板
   
-  ***重要：發佈前請將下方的 FIREBASE_CONFIG 替換為您自己的 Firebase 專案設定。***
+  ***重要：發佈前請確認下方的 FIREBASE_CONFIG 皆為您 Firebase 專案的正確設定。***
   
   此應用程式已包含 PWA 功能，可在手機上「新增到主畫面」以實現 App 體驗。
 -->
@@ -277,26 +277,43 @@
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ===================================================================================
-        // *** 重要：請用您在 Firebase Console 中取得的真實配置替換下方內容！***
+        // *** 重要：這是您提供的配置，已填入下方！***
         // ===================================================================================
-        // 這是您在 Firebase Console 建立網頁應用程式時獲得的配置，請確保格式正確
         const FIREBASE_CONFIG = {
-            apiKey: "YOUR_API_KEY",           // 請替換成您的 API Key
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com", // 請替換成您的 Auth Domain
-            projectId: "YOUR_PROJECT_ID",     // 請替換成您的 Project ID
-            storageBucket: "YOUR_STORAGE_BUCKET", // 請替換成您的 Storage Bucket
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // 請替換成您的 Sender ID
-            appId: "YOUR_APP_ID"              // 請替換成您的 App ID
+            apiKey: "AIzaSyD6spXAZxteQADlg7DUwwpLZbqTm4OR5QE",           // Firebase API Key (已填入您提供的金鑰)
+            authDomain: "idolstar-fanclub.firebaseapp.com", // 認證網域 (從您提供的資料推斷)
+            projectId: "idolstar-fanclub",     // 專案 ID (從網域推斷)
+            storageBucket: "idolstar-fanclub.firebasestorage.app", // 存儲桶 (從您提供的資料推斷)
+            messagingSenderId: "630308306753", // 訊息發送者 ID (從您提供的資料推斷)
+            appId: "1:630308306753:web:2f82144d918fde262f2bc0"              // 應用程式 ID (從您提供的資料推斷)
         };
         
         // 在公開網站版本中，我們使用 Project ID 作為 App 的唯一 ID
         const appId = FIREBASE_CONFIG.projectId; 
         // ===================================================================================
 
+        // ===================================================================================
+        // !!! 警告：Firestore 安全規則設定 (重要) !!!
+        // 由於您使用了匿名登入和私人資料，您的 Firestore 必須設定以下規則：
+        /*
+        rules_version = '2';
+        service cloud.firestore {
+          match /databases/{database}/documents {
+            // 允許使用者只能讀寫自己的 profile 文件
+            match /users/{userId} {
+              allow read, write: if request.auth != null && request.auth.uid == userId;
+            }
+          }
+        }
+        */
+        // 如果您不設定這些規則，您將會持續收到「Missing or insufficient permissions」錯誤。
+        // ===================================================================================
+
         let db;
         let auth;
         let currentUserId = null;
-        const PROFILE_COLLECTION = 'fan_profiles'; // Firestore 儲存個人檔案的 collection 名稱
+        // 修正：將集合名稱更改為更標準的 'users'，並更新路徑結構。
+        const USER_COLLECTION = 'users'; // Firestore 儲存使用者個人檔案的 collection 名稱
 
         // 顯示系統提示訊息
         function showSystemMessage(message, isError = false) {
@@ -318,15 +335,15 @@
         // 根據使用者 ID 獲取 Firestore 文件路徑 (公開版本使用匿名登入)
         function getUserDocRef(userId) {
             if (!db || !userId) return null;
-            // 私人數據路徑: /artifacts/{appId}/users/{userId}/fan_profiles/{userId}
-            return doc(db, `artifacts/${appId}/users/${userId}/${PROFILE_COLLECTION}/${userId}`);
+            // 修正路徑：使用標準的 /users/{userId} 結構
+            return doc(db, `${USER_COLLECTION}/${userId}`);
         }
 
         // 初始化 Firebase 和處理認證
         async function initFirebaseAndAuth() {
             // 檢查用戶是否已替換配置。'AIza' 是 Firebase API Key 的標準開頭。
-            if (FIREBASE_CONFIG.apiKey === "YOUR_API_KEY" || !FIREBASE_CONFIG.apiKey.startsWith('AIza')) {
-                showSystemMessage("錯誤：請先在代碼中替換您自己的 Firebase 配置。", true);
+            if (!FIREBASE_CONFIG.apiKey.startsWith('AIza')) {
+                showSystemMessage("錯誤：Firebase 配置無效，請檢查金鑰。", true);
                 return;
             }
 
@@ -396,7 +413,13 @@
                     updateDashboardUI({ nickname: '未設定', fav_idol: '無' });
                 }
             }, (error) => {
-                showSystemMessage(`Firestore 監聽錯誤: ${error.message}`, true);
+                const errorText = error.message || String(error);
+                // 檢查是否為特定的權限錯誤，並提供明確的修正指南
+                if (errorText.includes('Missing or insufficient permissions')) {
+                    showSystemMessage("存取錯誤！請檢查您的 Firebase Console -> Firestore -> 規則，確保已設定允許讀寫您個人檔案的安全規則。", true);
+                } else {
+                    showSystemMessage(`Firestore 監聽錯誤: ${errorText}`, true);
+                }
                 console.error("Firestore Listener Error:", error);
             });
         }
@@ -453,7 +476,13 @@
                 document.getElementById('profile-modal').classList.add('hidden'); // 儲存成功後關閉
 
             } catch (error) {
-                showSystemMessage(`儲存失敗: ${error.message}`, true);
+                const errorText = error.message || String(error);
+                // 檢查是否為特定的權限錯誤，並提供明確的修正指南
+                if (errorText.includes('Missing or insufficient permissions')) {
+                    showSystemMessage("儲存失敗！請檢查您的 Firebase Console -> Firestore -> 規則，確保已設定允許讀寫您個人檔案的安全規則。", true);
+                } else {
+                    showSystemMessage(`儲存失敗: ${errorText}`, true);
+                }
                 console.error("Save Profile Error:", error);
             }
         }
