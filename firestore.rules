@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1) 個人檔案：允許 user 讀寫自己的文件
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // 2) 管理員：替換 ADMIN_UID 為你的管理者 uid，允許其讀取所有 users
+    match /adminUsers/{document=**} {
+      allow read: if false; // placeholder for other admin features
+    }
+    match /{document=**} {
+      allow read: if false;
+    }
+  }
+}

@@ -1,505 +1,79 @@
-<!--
-  IDOLSTAR (Idol Fan Club Dashboard) - 可直接部署的網站模板
-  
-  ***重要：發佈前請確認下方的 FIREBASE_CONFIG 皆為您 Firebase 專案的正確設定。***
-  
-  此應用程式已包含 PWA 功能，可在手機上「新增到主畫面」以實現 App 體驗。
--->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDOLSTAR</title>
-
-    <!-- PWA 和移動元標記開始 -->
-    <link rel="manifest" id="manifest-link">
-    <meta name="theme-color" content="#8A2BE2">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="IDOLSTAR">
-    <link rel="apple-touch-icon" href="https://placehold.co/180x180/FF69B4/FFFFFF?text=IDOL">
-    <!-- PWA 和移動元標記結束 -->
-
-    <!-- 載入 Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 設置字體為 Inter 和 Noto Sans TC -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Noto+Sans+TC:wght@300;400;700&display=swap');
-        body {
-            font-family: 'Noto Sans TC', 'Inter', sans-serif;
-            background-color: #f7f3f8;
-        }
-    </style>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-pink': '#FF69B4', /* 偶像粉色 */
-                        'secondary-purple': '#8A2BE2', /* 夢幻紫 */
-                    },
-                }
-            }
-        }
-    </script>
-    
-    <!-- PWA Manifest 動態生成腳本 -->
-    <script>
-        // 必須動態生成 Manifest
-        const manifest = {
-            "name": "IDOLSTAR",
-            "short_name": "IDOLSTAR",
-            // 部署到公開網站時，start_url 應該是 "/" 或檔案名稱
-            "start_url": "./index.html", 
-            "display": "standalone",
-            "background_color": "#f7f3f8",
-            "theme_color": "#8A2BE2",
-            "icons": [
-                { "src": "https://placehold.co/192x192/FF69B4/FFFFFF?text=IDOL", "sizes": "192x192", "type": "image/png" },
-                { "src": "https://placehold.co/512x512/FF69B4/FFFFFF?text=IDOLSTAR", "sizes": "512x512", "type": "image/png" }
-            ]
-        };
-        const manifestString = JSON.stringify(manifest);
-        const blob = new Blob([manifestString], {type: 'application/json'});
-        const manifestURL = URL.createObjectURL(blob);
-        document.getElementById('manifest-link').href = manifestURL;
-    </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IDOLSTAR — Pro (Vercel)</title>
+  <link rel="manifest" id="manifest-link">
+  <meta name="theme-color" content="#8A2BE2" />
+  <link rel="apple-touch-icon" href="https://placehold.co/180x180/FF69B4/FFFFFF?text=IDOL">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body{font-family:Inter, Noto Sans TC, sans-serif}</style>
 </head>
-<body class="min-h-screen flex flex-col">
-
-    <!-- 導航欄 (Top Bar) -->
-    <header class="sticky top-0 z-50 bg-white shadow-xl">
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center py-3">
-            <a href="#" class="flex items-center space-x-2 hover:opacity-80 transition duration-150">
-                <!-- Icon and Title -->
-                <svg class="w-8 h-8 text-primary-pink" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.152A1.25 1.25 0 0112 2.75V21.25a1.25 1.25 0 01-.951.598L6.46 22.51l.951-4.755A1.25 1.25 0 017.5 17.5h9a1.25 1.25 0 011.089.435l.951 4.755-4.589-.758z"></path></svg>
-                <span class="text-xl font-bold text-secondary-purple">IDOLSTAR</span>
-            </a>
-            <div id="auth-status" class="text-sm text-gray-500 flex items-center space-x-2">
-                <!-- 認證狀態將在這裡顯示 -->
-            </div>
-        </nav>
-    </header>
-
-    <!-- 主要內容區 -->
-    <main class="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full">
-
-        <!-- 1. 載入中/登入畫面 -->
-        <div id="loading-view" class="flex flex-col items-center justify-center min-h-[50vh]">
-            <svg class="animate-spin h-8 w-8 text-primary-pink mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="text-secondary-purple font-semibold">系統啟動中，正在安全登入...</p>
-        </div>
-
-        <!-- 2. 儀表板畫面 (初始隱藏) -->
-        <div id="dashboard-view" class="hidden">
-            <h1 class="text-3xl font-extrabold text-gray-900 mb-6 border-b-2 border-primary-pink pb-2">
-                歡迎，<span id="user-nickname" class="text-primary-pink">用戶</span>！
-            </h1>
-
-            <div class="grid md:grid-cols-2 gap-6">
-
-                <!-- 個人檔案卡片 -->
-                <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-secondary-purple">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-bold text-secondary-purple">我的追星檔案</h2>
-                        <button onclick="document.getElementById('profile-modal').classList.remove('hidden')" class="text-primary-pink hover:text-pink-600 font-medium flex items-center space-x-1">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            <span>編輯</span>
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div>
-                            <p class="text-sm text-gray-500">我的暱稱</p>
-                            <p id="profile-nickname" class="text-lg font-semibold text-gray-800">-</p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500">最喜歡的偶像</p>
-                            <p id="profile-fav-idol" class="text-lg font-semibold text-primary-pink flex items-center">
-                                <span class="w-3 h-3 bg-primary-pink rounded-full mr-2"></span>
-                                -
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-500">我的 Fan Club ID</p>
-                            <p id="profile-user-id" class="text-xs font-mono text-gray-600 break-all">-</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 偶像團體簡介卡片 (通用化) -->
-                <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-primary-pink">
-                    <h2 class="text-xl font-bold text-primary-pink mb-4">您所追蹤的偶像</h2>
-                    <p class="text-gray-700 text-sm mb-4 leading-relaxed">
-                        您在「IDOLSTAR」中追蹤的偶像或團體資訊將會顯示在這裡。目前此卡片顯示的是通用模板訊息。
-                    </p>
-                    <p class="text-gray-500 italic text-sm">
-                        此處將顯示您所追蹤偶像團體的最新成員資訊及簡介。
-                    </p>
-                    <button class="mt-4 text-primary-pink hover:text-pink-600 font-medium text-sm">
-                        查看更多資訊 &rarr;
-                    </button>
-                </div>
-
-            </div>
-
-             <!-- 系統操作提示區 -->
-            <div id="system-message-box" class="mt-8 p-4 bg-purple-100 border-l-4 border-secondary-purple text-secondary-purple rounded-lg hidden" role="alert">
-                <p class="font-semibold">提示：</p>
-                <p id="system-message-text" class="text-sm">系統正在加載您的個人數據...</p>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- 頁尾 (Footer) -->
-    <footer class="mt-auto bg-secondary-purple py-4">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white text-sm">
-            <p>&copy; 2025 IDOLSTAR。</p>
-        </div>
-    </footer>
-
-    <!-- 個人檔案設定/編輯模態框 (Modal) -->
-    <div id="profile-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target.id === 'profile-modal') document.getElementById('profile-modal').classList.add('hidden')">
-        <div class="bg-white p-6 md:p-8 rounded-xl shadow-2xl max-w-lg w-full transform transition-all duration-300 scale-100">
-            <h3 class="text-2xl font-bold text-secondary-purple mb-4 border-b pb-2">IDOLSTAR - 註冊/編輯</h3>
-            <p class="text-gray-600 mb-6 text-sm">歡迎加入 IDOLSTAR！請設定您的追星檔案。</p>
-            <form id="profile-form">
-                <div class="mb-4">
-                    <label for="input-nickname" class="block text-sm font-medium text-gray-700 mb-1">您的暱稱</label>
-                    <input type="text" id="input-nickname" name="nickname" required placeholder="例如：星辰追光者" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-pink focus:border-primary-pink">
-                </div>
-                <!-- 已將下拉選單替換為手動輸入框 -->
-                <div class="mb-6">
-                    <label for="input-fav-idol" class="block text-sm font-medium text-gray-700 mb-1">最喜歡的偶像</label>
-                    <input type="text" id="input-fav-idol" name="fav_idol" required placeholder="請自行輸入偶像的名字或團體名稱" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-pink focus:border-primary-pink">
-                </div>
-                <div class="flex justify-end space-x-4">
-                    <button type="button" onclick="document.getElementById('profile-modal').classList.add('hidden')" class="px-4 py-2 text-gray-600 bg-gray-200 rounded-full hover:bg-gray-300 transition duration-150">取消</button>
-                    <button type="submit" class="px-6 py-2 bg-primary-pink text-white font-semibold rounded-full shadow-lg hover:bg-pink-600 transition duration-300">儲存變更</button>
-                </div>
-            </form>
-        </div>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+  <header class="p-4 bg-white dark:bg-gray-800 shadow-md">
+    <div class="max-w-4xl mx-auto flex justify-between items-center">
+      <h1 class="text-xl font-bold text-secondary-purple">IDOLSTAR — Pro</h1>
+      <div class="flex items-center space-x-3">
+        <button id="theme-toggle" class="px-3 py-1 rounded bg-gray-100 dark:bg-gray-700 hidden sm:inline">主題</button>
+        <div id="auth-status" class="text-sm"></div>
+      </div>
     </div>
+  </header>
 
-    <!-- PWA Service Worker 註冊腳本 -->
-    <script>
-        // Service Worker 註冊 (動態嵌入)
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                const CACHE_NAME = 'idolstar-cache-v1';
-                // 我們只快取 CDN 資源，主要的 index.html 會在首次載入時被快取
-                const urlsToCache = [
-                    'https://cdn.tailwindcss.com',
-                    'https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Noto+Sans+TC:wght@300;400;700&display=swap',
-                    'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js',
-                    'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js',
-                    'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js'
-                ];
+  <main class="max-w-4xl mx-auto p-6">
+    <section id="auth-section" class="mb-6 bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <h2 class="font-semibold mb-3">帳號（Email / Password）</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form id="signup-form" class="space-y-2">
+          <input type="email" id="signup-email" placeholder="Email" class="w-full p-2 border rounded" required>
+          <input type="password" id="signup-pw" placeholder="密碼（≥6）" class="w-full p-2 border rounded" required>
+          <button class="px-4 py-2 bg-primary-pink text-white rounded">註冊</button>
+        </form>
+        <form id="login-form" class="space-y-2">
+          <input type="email" id="login-email" placeholder="Email" class="w-full p-2 border rounded" required>
+          <input type="password" id="login-pw" placeholder="密碼" class="w-full p-2 border rounded" required>
+          <button class="px-4 py-2 bg-secondary-purple text-white rounded">登入</button>
+        </form>
+      </div>
+      <div class="mt-3 text-sm text-gray-500">或使用匿名登入： <button id="anon-btn" class="text-primary-pink">匿名登入</button></div>
+    </section>
 
-                self.addEventListener('install', event => {
-                    event.waitUntil(
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                console.log('Service Worker: Cache opened');
-                                // 使用 no-cors 模式快取外部 CDN 資源
-                                const requests = urlsToCache.map(url => new Request(url, { mode: 'no-cors' }));
-                                return cache.addAll(requests);
-                            }).catch(err => {
-                                console.error('Service Worker: Cache install failed', err);
-                            })
-                    );
-                });
+    <section id="profile-section" class="hidden bg-white dark:bg-gray-800 p-4 rounded shadow mb-6">
+      <div class="flex items-center space-x-4 mb-4">
+        <img id="avatar-img" class="w-16 h-16 rounded-full border" src="https://placehold.co/64x64/FF69B4/FFFFFF?text=ID" alt="avatar">
+        <div>
+          <div id="display-nickname" class="font-semibold text-lg">-</div>
+          <div id="display-fav" class="text-sm text-gray-500">最喜歡：-</div>
+        </div>
+      </div>
 
-                self.addEventListener('fetch', event => {
-                    // 讓瀏覽器處理 Firebase/Google API 的動態請求
-                    if (event.request.url.includes('firebase') || event.request.url.includes('firestore') || event.request.url.includes('google')) {
-                        return; 
-                    }
+      <form id="profile-form" class="space-y-2">
+        <input type="text" id="nickname" placeholder="暱稱" class="w-full p-2 border rounded" required>
+        <input type="text" id="fav_idol" placeholder="喜歡的偶像" class="w-full p-2 border rounded" required>
+        <div class="flex items-center space-x-2">
+          <label class="cursor-pointer inline-flex items-center px-3 py-2 bg-gray-100 rounded">
+            <input id="avatar-file" type="file" accept="image/*" class="hidden">
+            上傳頭像
+          </label>
+          <button class="px-4 py-2 bg-primary-pink text-white rounded">儲存</button>
+        </div>
+      </form>
+      <div class="mt-3">
+        <button id="logout-btn" class="px-3 py-1 rounded bg-gray-200">登出</button>
+      </div>
+    </section>
 
-                    event.respondWith(
-                        caches.match(event.request)
-                            .then(response => {
-                                // 1. 快取命中 (Cache Hit)
-                                if (response) {
-                                    return response;
-                                }
-                                
-                                // 2. 快取未命中 (Cache Miss) - 從網路抓取並快取
-                                return fetch(event.request).then(
-                                    response => {
-                                        if(!response || (response.status !== 200 && response.status !== 0) ) {
-                                            return response;
-                                        }
+    <section id="notification-section" class="bg-white dark:bg-gray-800 p-4 rounded shadow hidden">
+      <h3 class="font-semibold mb-2">推播（FCM）</h3>
+      <div class="mb-2">是否允許接收推播： <span id="fcm-status" class="font-medium">未啟用</span></div>
+      <button id="fcm-enable" class="px-3 py-1 bg-secondary-purple text-white rounded">啟用推播</button>
+    </section>
 
-                                        const responseToCache = response.clone();
+    <div id="system" class="text-sm text-gray-500 mt-4"></div>
+  </main>
 
-                                        caches.open(CACHE_NAME)
-                                            .then(cache => {
-                                                if (event.request.method === 'GET') {
-                                                    cache.put(event.request, responseToCache);
-                                                }
-                                            });
-
-                                        return response;
-                                    }
-                                );
-                            })
-                    );
-                });
-            `;
-            
-            const swBlob = new Blob([swCode], { type: 'application/javascript' });
-            const swUrl = URL.createObjectURL(swBlob);
-
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register(swUrl)
-                    .then(registration => {
-                        console.log('ServiceWorker 註冊成功，範圍: ', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker 註冊失敗: ', error);
-                    });
-            });
-        }
-    </script>
-
-    <!-- Firebase Script Start -->
-    <script type="module">
-        // 載入 Firebase SDK 模組
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // ===================================================================================
-        // *** 重要：這是您提供的配置，已填入下方！***
-        // ===================================================================================
-        const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyD6spXAZxteQADlg7DUwwpLZbqTm4OR5QE",           // Firebase API Key (已填入您提供的金鑰)
-            authDomain: "idolstar-fanclub.firebaseapp.com", // 認證網域 (從您提供的資料推斷)
-            projectId: "idolstar-fanclub",     // 專案 ID (從網域推斷)
-            storageBucket: "idolstar-fanclub.firebasestorage.app", // 存儲桶 (從您提供的資料推斷)
-            messagingSenderId: "630308306753", // 訊息發送者 ID (從您提供的資料推斷)
-            appId: "1:630308306753:web:2f82144d918fde262f2bc0"              // 應用程式 ID (從您提供的資料推斷)
-        };
-        
-        // 在公開網站版本中，我們使用 Project ID 作為 App 的唯一 ID
-        const appId = FIREBASE_CONFIG.projectId; 
-        // ===================================================================================
-
-        // ===================================================================================
-        // !!! 警告：Firestore 安全規則設定 (重要) !!!
-        // 由於您使用了匿名登入和私人資料，您的 Firestore 必須設定以下規則：
-        /*
-        rules_version = '2';
-        service cloud.firestore {
-          match /databases/{database}/documents {
-            // 允許使用者只能讀寫自己的 profile 文件
-            match /users/{userId} {
-              allow read, write: if request.auth != null && request.auth.uid == userId;
-            }
-          }
-        }
-        */
-        // 如果您不設定這些規則，您將會持續收到「Missing or insufficient permissions」錯誤。
-        // ===================================================================================
-
-        let db;
-        let auth;
-        let currentUserId = null;
-        // 修正：將集合名稱更改為更標準的 'users'，並更新路徑結構。
-        const USER_COLLECTION = 'users'; // Firestore 儲存使用者個人檔案的 collection 名稱
-
-        // 顯示系統提示訊息
-        function showSystemMessage(message, isError = false) {
-            const box = document.getElementById('system-message-box');
-            const text = document.getElementById('system-message-text');
-            text.textContent = message;
-            box.classList.remove('hidden', 'border-secondary-purple', 'bg-purple-100', 'border-red-500', 'bg-red-100', 'text-red-700', 'text-secondary-purple');
-            if (isError) {
-                box.classList.add('border-red-500', 'bg-red-100', 'text-red-700');
-            } else {
-                box.classList.add('border-secondary-purple', 'bg-purple-100', 'text-secondary-purple');
-            }
-            // 系統訊息顯示 5 秒後消失
-            setTimeout(() => {
-                box.classList.add('hidden');
-            }, 5000);
-        }
-
-        // 根據使用者 ID 獲取 Firestore 文件路徑 (公開版本使用匿名登入)
-        function getUserDocRef(userId) {
-            if (!db || !userId) return null;
-            // 修正路徑：使用標準的 /users/{userId} 結構
-            return doc(db, `${USER_COLLECTION}/${userId}`);
-        }
-
-        // 初始化 Firebase 和處理認證
-        async function initFirebaseAndAuth() {
-            // 檢查用戶是否已替換配置。'AIza' 是 Firebase API Key 的標準開頭。
-            if (!FIREBASE_CONFIG.apiKey.startsWith('AIza')) {
-                showSystemMessage("錯誤：Firebase 配置無效，請檢查金鑰。", true);
-                return;
-            }
-
-            try {
-                // 1. 初始化 Firebase App
-                const app = initializeApp(FIREBASE_CONFIG);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                setLogLevel('debug'); // 開啟 Firestore 偵錯日誌
-
-                document.getElementById('auth-status').textContent = '等待認證...';
-
-                // 2. 處理認證狀態變更 (公開版本使用匿名登入)
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        currentUserId = user.uid;
-                        document.getElementById('auth-status').innerHTML = `<span class="text-secondary-purple font-medium">已登入</span> ID: <span class="text-xs font-mono">${currentUserId.substring(0, 8)}...</span>`;
-
-                        // 顯示儀表板並隱藏載入畫面
-                        document.getElementById('loading-view').classList.add('hidden');
-                        document.getElementById('dashboard-view').classList.remove('hidden');
-                        
-                        // 3. 啟動 Firestore 即時監聽
-                        setupProfileListener(currentUserId);
-
-                        // 4. 首次登入檢查：如果沒有 profile，彈出設定框
-                        const docRef = getUserDocRef(currentUserId);
-                        const docSnap = await getDoc(docRef);
-                        if (!docSnap.exists()) {
-                            showSystemMessage("歡迎新成員！請先設定您的追星檔案。", false);
-                            document.getElementById('profile-modal').classList.remove('hidden');
-                        }
-
-                    } else {
-                        // 未登入：在公開網站上，我們預設執行匿名登入
-                        await signInAnonymously(auth).catch(e => {
-                            showSystemMessage(`匿名登入失敗: ${e.message}`, true);
-                        });
-                    }
-                });
-
-                // 確保登入過程啟動 (如果一開始沒有用戶)
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth).catch(e => {
-                        showSystemMessage(`初始化匿名登入失敗: ${e.message}`, true);
-                    });
-                }
-
-            } catch (error) {
-                showSystemMessage(`Firebase 初始化錯誤: ${error.message}`, true);
-                console.error("Firebase Initialization Error:", error);
-            }
-        }
-
-        // 設定對使用者個人檔案的即時監聽
-        function setupProfileListener(userId) {
-            const docRef = getUserDocRef(userId);
-            if (!docRef) return;
-
-            // onSnapshot 會在數據變更時即時更新 UI
-            onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    updateDashboardUI(data);
-                } else {
-                    // 如果數據被刪除或首次加載時不存在
-                    updateDashboardUI({ nickname: '未設定', fav_idol: '無' });
-                }
-            }, (error) => {
-                const errorText = error.message || String(error);
-                // 檢查是否為特定的權限錯誤，並提供明確的修正指南
-                if (errorText.includes('Missing or insufficient permissions')) {
-                    showSystemMessage("存取錯誤！請檢查您的 Firebase Console -> Firestore -> 規則，確保已設定允許讀寫您個人檔案的安全規則。", true);
-                } else {
-                    showSystemMessage(`Firestore 監聽錯誤: ${errorText}`, true);
-                }
-                console.error("Firestore Listener Error:", error);
-            });
-        }
-
-        // 更新儀表板 UI
-        function updateDashboardUI(profileData) {
-            const { nickname, fav_idol } = profileData;
-
-            document.getElementById('user-nickname').textContent = nickname || '未設定';
-            document.getElementById('profile-nickname').textContent = nickname || '未設定';
-            document.getElementById('profile-fav-idol').textContent = fav_idol || '無';
-            document.getElementById('profile-user-id').textContent = currentUserId;
-
-            // 預填充模態框以便編輯
-            document.getElementById('input-nickname').value = nickname || '';
-            document.getElementById('input-fav-idol').value = fav_idol || '';
-
-            if (nickname && fav_idol) {
-                // 如果成功加載，隱藏模態框（如果它開著）
-                 document.getElementById('profile-modal').classList.add('hidden');
-            }
-        }
-
-        // 儲存/更新個人檔案到 Firestore
-        async function saveUserProfile(event) {
-            event.preventDefault();
-            if (!currentUserId) {
-                showSystemMessage("錯誤：使用者尚未登入。", true);
-                return;
-            }
-
-            const form = event.target;
-            const nickname = form.elements['nickname'].value.trim();
-            const fav_idol = form.elements['fav_idol'].value.trim();
-
-            if (!nickname || !fav_idol) {
-                showSystemMessage("錯誤：暱稱和最喜歡的偶像都必須填寫。", true);
-                return;
-            }
-
-            try {
-                showSystemMessage("正在儲存個人檔案...");
-                const docRef = getUserDocRef(currentUserId);
-
-                const profileData = {
-                    nickname: nickname,
-                    fav_idol: fav_idol,
-                    updatedAt: new Date().toISOString()
-                };
-
-                // setDoc 會創建或覆蓋文件
-                await setDoc(docRef, profileData);
-                showSystemMessage("個人檔案儲存成功！");
-                document.getElementById('profile-modal').classList.add('hidden'); // 儲存成功後關閉
-
-            } catch (error) {
-                const errorText = error.message || String(error);
-                // 檢查是否為特定的權限錯誤，並提供明確的修正指南
-                if (errorText.includes('Missing or insufficient permissions')) {
-                    showSystemMessage("儲存失敗！請檢查您的 Firebase Console -> Firestore -> 規則，確保已設定允許讀寫您個人檔案的安全規則。", true);
-                } else {
-                    showSystemMessage(`儲存失敗: ${errorText}`, true);
-                }
-                console.error("Save Profile Error:", error);
-            }
-        }
-
-        // 啟動應用程式
-        window.onload = () => {
-            initFirebaseAndAuth();
-
-            // 為表單綁定提交事件
-            const profileForm = document.getElementById('profile-form');
-            if (profileForm) {
-                profileForm.addEventListener('submit', saveUserProfile);
-            }
-        };
-
-    </script>
-    <!-- Firebase Script End -->
-
+  <script type="module" src="/firebase.js"></script>
+  <script type="module" src="/main.js"></script>
 </body>
 </html>

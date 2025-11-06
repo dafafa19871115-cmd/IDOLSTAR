@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-TW">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>IDOLSTAR Admin</title>
+<script src="https://cdn.tailwindcss.com"></script></head>
+<body class="p-6 bg-gray-50 text-gray-900">
+  <h1 class="text-2xl font-bold mb-4">管理後台（需為 ADMIN_UID 才能查看）</h1>
+  <div id="status" class="mb-4 text-sm text-gray-600"></div>
+  <div id="users" class="space-y-2"></div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    const cfg = {
+      apiKey: "AIzaSyD6spXAZxteQADlg7DUwwpLZbqTm4OR5QE",
+      authDomain: "idolstar-fanclub.firebaseapp.com",
+      projectId: "idolstar-fanclub"
+    };
+    const ADMIN_UID = "REPLACE_WITH_ADMIN_UID";
+    const app = initializeApp(cfg);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const status = document.getElementById('status');
+    const usersDiv = document.getElementById('users');
+
+    onAuthStateChanged(auth, async user => {
+      if (!user) { status.textContent = '請先登入（同一 firebase 專案）'; return; }
+      if (user.uid !== ADMIN_UID) { status.textContent = '無權限：您不是管理者'; return; }
+      status.textContent = '已驗證為管理者，載入使用者...';
+      try {
+        const col = collection(db, 'users');
+        const snap = await getDocs(col);
+        snap.forEach(d=>{
+          const data = d.data();
+          const el = document.createElement('div');
+          el.className = 'p-3 bg-white rounded shadow';
+          el.innerHTML = `<div class="font-semibold">${d.id}</div><div class="text-sm text-gray-600">${JSON.stringify(data)}</div>`;
+          usersDiv.appendChild(el);
+        });
+      } catch(e) { status.textContent = '載入失敗：'+e.message; }
+    });
+  </script>
+</body></html>
